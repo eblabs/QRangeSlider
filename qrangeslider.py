@@ -33,8 +33,10 @@
 # ---------------------------------------------------------------------------------------------
 
 __author__ = "Ryan Galloway <ryan@rsgalloway.com>"
-__version__ = "0.1.1"
-
+__version__ = "0.1.2"
+'''
+Modified by Eric Bates, eric@eric-bates.com to add an additional signal for sliding the center handle
+'''
 
 # ---------------------------------------------------------------------------------------------
 # SUMMARY
@@ -305,6 +307,7 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
     maxValueChanged = QtCore.pyqtSignal(int)
     minValueChanged = QtCore.pyqtSignal(int)
     startValueChanged = QtCore.pyqtSignal(int)
+    rangeValueChanged = QtCore.pyqtSignal(list)
 
     # define splitter indices
     _SPLIT_START = 1
@@ -390,33 +393,35 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
         """:return: range slider end value"""
         return getattr(self, '__end', None)
 
-    def _setStart(self, value):
+    def _setStart(self, value, emit=True):
         """stores the start value only"""
         setattr(self, '__start', value)
-        self.startValueChanged.emit(value)
+        if emit:
+            self.startValueChanged.emit(value)
     
-    def setStart(self, value):
+    def setStart(self, value, emit=True):
         """sets the range slider start value"""
         assert type(value) is int
         v = self._valueToPos(value)
         self._splitter.splitterMoved.disconnect()
         self._splitter.moveSplitter(v, self._SPLIT_START)
         self._splitter.splitterMoved.connect(self._handleMoveSplitter)
-        self._setStart(value)
+        self._setStart(value, emit=emit)
 
-    def _setEnd(self, value):
+    def _setEnd(self, value, emit=True):
         """stores the end value only"""
         setattr(self, '__end', value)
-        self.endValueChanged.emit(value)
+        if emit:
+            self.endValueChanged.emit(value)
     
-    def setEnd(self, value):
+    def setEnd(self, value, emit=True):
         """set the range slider end value"""
         assert type(value) is int
         v = self._valueToPos(value)
         self._splitter.splitterMoved.disconnect()
         self._splitter.moveSplitter(v, self._SPLIT_END)
         self._splitter.splitterMoved.connect(self._handleMoveSplitter)
-        self._setEnd(value)
+        self._setEnd(value, emit=emit)
 
     def drawValues(self):
         """:return: True if slider values will be drawn"""
@@ -433,8 +438,9 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
 
     def setRange(self, start, end):
         """set the start and end values"""
-        self.setStart(start)
-        self.setEnd(end)
+        self.setStart(start, emit=False)
+        self.setEnd(end, emit=False)
+        self.rangeValueChanged.emit([start, end])
         
     def keyPressEvent(self, event):
         """overrides key press event to move range left and right"""
